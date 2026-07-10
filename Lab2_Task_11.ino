@@ -3,9 +3,6 @@
 #include <Arduino_HS300x.h>
 #include <math.h>
 
-unsigned long lastEventTime = 0;
-const unsigned long cooldown = 3000;
-
 void situation() {
   float temperature = HS300x.readTemperature();
   float humidity = HS300x.readHumidity();
@@ -15,9 +12,9 @@ void situation() {
   static int b = 0;
   static int c = 0;
 
-  static float x = 0;
-  static float y = 0;
-  static float z = 0;
+  static float x = 0.0;
+  static float y = 0.0;
+  static float z = 0.0;
 
   if (APDS.colorAvailable()) {
     APDS.readColor(r, g, b, c);
@@ -28,6 +25,7 @@ void situation() {
   }
 
   float mag = sqrt(x * x + y * y + z * z);
+
   static float oldHumidity = humidity;
   static float oldTemperature = temperature;
   static float oldMag = mag;
@@ -46,7 +44,7 @@ void situation() {
     tempFlag = 1;
   }
 
-  if (abs(mag - oldMag) > 15.0) {
+  if (fabs(mag - oldMag) > 15.0) {
     magFlag = 1;
   }
 
@@ -102,6 +100,11 @@ void situation() {
     Serial.println("event,<BASELINE_NORMAL>");
   }
 
+  // Reset debounce when all conditions return to normal.
+  if (!humidFlag && !tempFlag && !magFlag && !lightFlag) {
+    eventTriggered = false;
+  }
+
   oldHumidity = humidity;
   oldTemperature = temperature;
   oldMag = mag;
@@ -116,17 +119,20 @@ void setup() {
 
   if (!APDS.begin()) {
     Serial.println("Failed to start APDS sensor.");
-    while (1);
+    while (1) {
+    }
   }
 
   if (!HS300x.begin()) {
     Serial.println("Failed to start HS3003 sensor.");
-    while (1);
+    while (1) {
+    }
   }
 
   if (!IMU.begin()) {
     Serial.println("Failed to start IMU.");
-    while (1);
+    while (1) {
+    }
   }
 }
 
